@@ -2,6 +2,7 @@
 Acorn Atom emulator for DOS.
 
 ## License ##
+Non Profit
 
 ## Author ##
 Wouter Ras
