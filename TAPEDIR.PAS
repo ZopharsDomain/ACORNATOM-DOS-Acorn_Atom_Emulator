@@ -1,0 +1,56 @@
+{$i-}
+TYPE STR4 = STRING[4];
+
+FUNCTION HEXW (Q:WORD) : STR4;
+CONST HEXSTR: ARRAY[0..15] OF CHAR = '0123456789ABCDEF';
+BEGIN
+  HEXW := HEXSTR[HI(Q) SHR 4] + HEXSTR[Hi(Q) AND $0F] +
+          HEXSTR[LO(Q) SHR 4] + HEXSTR[LO(Q) AND $0F];
+END;
+
+PROCEDURE READDIR (VAR F:FILE);
+VAR I    : BYTE;
+    STRT : WORD;
+    EXEC : WORD;
+    SIZE : WORD;
+    NAME : STRING[16];
+    NR   : WORD;
+BEGIN
+  WHILE NOT EOF(F) DO
+  BEGIN
+    BLOCKREAD (F,NAME[1],16,NR);
+    NAME[0] := #16;
+    FOR I := 1 TO 16 DO IF NAME[I] = #0 THEN NAME[I] := ' ';
+    BLOCKREAD (F,STRT,2,NR);
+    BLOCKREAD (F,EXEC,2,NR);
+    BLOCKREAD (F,SIZE,2,NR);
+    IF NOT EOF(F) THEN WRITELN (NAME,HEXW(STRT):5,HEXW(EXEC):5,HEXW(SIZE):5);
+    SEEK (F,FILEPOS(F)+SIZE);
+  END;
+END;
+
+{---[main]------------------------------------------------------------------}
+VAR FNAME : STRING;
+    F     : FILE;
+    I     : BYTE;
+
+BEGIN
+  IF PARAMCOUNT <> 1 THEN
+  BEGIN
+    WRITELN ('Usage: TapeDir File[.Tap]');
+    HALT;
+  END;
+  FNAME := PARAMSTR(1);
+  FOR I := 1 TO LENGTH(FNAME) DO FNAME[I] := UPCASE(FNAME[I]);
+  IF COPY(FNAME,LENGTH(FNAME)-3,4) <> '.TAP' THEN FNAME := FNAME + '.TAP';
+  ASSIGN (F,FNAME);
+  FILEMODE := 0;
+  RESET (F,1);
+  IF IORESULT <> 0 THEN
+  BEGIN
+    WRITELN ('Couldn''t open file ',FNAME);
+    HALT;
+  END;
+  READDIR (F);
+  CLOSE (F);
+END.
